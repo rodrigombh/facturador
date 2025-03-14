@@ -1,19 +1,12 @@
 /* README
-
-    CUANDO LO USES, TENES QUE PROBAR SI TE BAJA CORRECTAMENTE EL COMPROBANTE
-
     - Correr: node facturador.ts
     - Ingresar credenciales manualmente.
     - Ir a "Comprobantes en Linea"
     - Cerrar la pestaña anterior
     - Seleccionar mi nombre
-    - Volver a la terminal. Tipear 1 y ENTER
-    - Ingresar '1de1' para hacer un chequeo
-    - Esperar a la magia
-    - Corroborar que salio todo bien. Renombrate el archivo anterior.
-    - Volver a ejecutar automatizacion... pero ahora podes poder '2de17' por ej.
+    - Volver a la terminal. Tipear 1, ingresar cantidad de facturas y ENTER
+    - Esperar la magia
     - Al finalizar volver a la terminal. Tipear 2 y ENTER
-
 */
 
 const { Builder, By } = require('selenium-webdriver');
@@ -41,12 +34,6 @@ require('chromedriver');
   const ultimoDiaMesAnterior = new Date(now.getFullYear(), now.getMonth(), 0);
   const fechaDesde = primerDiaMesAnterior.toLocaleDateString('es-AR');
   const fechaHasta = ultimoDiaMesAnterior.toLocaleDateString('es-AR');
-  const meses = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-  ];
-  const mesAño = `${meses[primerDiaMesAnterior.getMonth()]}${primerDiaMesAnterior.getFullYear()}`;
-  const downloadDir = '/Users/rodrigombh/Documents/Facturas Emitidas';
 
   try {
     await driver.get('https://auth.afip.gob.ar/contribuyente_/login.xhtml');
@@ -59,8 +46,8 @@ require('chromedriver');
       const choice = await getUserInput("Selecciona una opción (1/2): ");
 
       if (choice === "1") {
-        const facturaFormato = await getUserInput("Ingrese el formato contador de factura (ej: 5de16): ");
-        const { inicio, final } = parseFacturaFormato(facturaFormato);
+        const cantidadInput = await getUserInput("Ingrese cantidad de facturas a generar: ");
+        const cantidad = parseCantidadInput(cantidadInput);
 
         const handles = await driver.getAllWindowHandles();
         if (handles.length > 1) {
@@ -71,7 +58,7 @@ require('chromedriver');
 
         console.log("Ejecutando automatización...");
  
-        for (var i = inicio; i <= final; i++) {
+        for (var index = 0; index <= cantidad; index++) {
           try {
             // RCEL - RÉGIMEN DE COMPROBANTES EN LÍNEA
             const botonGenerar = await driver.findElement(By.xpath("//*[text()='Generar Comprobantes']"));
@@ -139,35 +126,11 @@ require('chromedriver');
             }, 5000);
             await sleep(1000);
 
-            const archivosAntes = new Set(fs.readdirSync(downloadDir).filter(file => file.endsWith('.pdf')));
-            botonContinuar = await driver.findElement(By.xpath("//input[@type='button' and @value='Imprimir...']"));
-            await botonContinuar.click();
-            let pdfFile;
-            let downloadTimeout = 20000;
-            const startTime = Date.now();
-            while (Date.now() - startTime < downloadTimeout) {
-              const archivosDespues = fs.readdirSync(downloadDir).filter(file => file.endsWith('.pdf'));
-              const nuevoArchivo = archivosDespues.find(file => !archivosAntes.has(file));
-              if (nuevoArchivo) {
-                pdfFile = path.join(downloadDir, nuevoArchivo);
-                break;
-              }
-              await sleep(1000);
-            }
-            if (!pdfFile) {
-              throw "⛔ No se encontró el archivo PDF después de esperar.";
-            }
-            const oldPath = pdfFile;
-            const nuevoNombre = `factura-${i}de${final}-${mesAño}.pdf`;
-            const newPath = path.join(downloadDir, nuevoNombre);
-            fs.renameSync(oldPath, newPath);
-            await sleep(1000);
-
             botonContinuar = await driver.findElement(By.xpath("//input[@type='button' and @value='Menú Principal']"));            
             await botonContinuar.click();
             await sleep(1000);
 
-            console.log("Automatización completada.");
+            console.log("Automatización completada numero: " + index);
           } catch (error) {
             console.error("Error durante la automatización:", error.message);
           }
@@ -205,11 +168,11 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function parseFacturaFormato(input) {
-  const match = input.match(/^(\d+)de(\d+)$/);
+function parseCantidadInput(input) {
+  const match = input.match(/^(\d+)$/);
   if (match) {
-      return { inicio: parseInt(match[1], 10), final: parseInt(match[2], 10) };
+      return parseInt(match[1], 10);
   } else {
-      throw "Formato inválido. Debe ser algo como '5de16'."
+      throw "Formato inválido. Debe ser un número, como '5'.";
   }
 }
