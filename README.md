@@ -2,7 +2,7 @@
 - Ingresar credenciales manualmente.
 - Ir a "Comprobantes en Linea"
 - Cerrar la pestaña anterior
-- Seleccionar mi nombre
+- Seleccionar tu nombre
 - Volver a la terminal. Tipear 1, ingresar cantidad de facturas y ENTER
 - Esperar la magia
 - Al finalizar volver a la terminal. Tipear 2 y ENTER
