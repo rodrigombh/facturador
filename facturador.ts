@@ -58,7 +58,7 @@ require('chromedriver');
 
         console.log("Ejecutando automatización...");
  
-        for (var index = 0; index <= cantidad; index++) {
+        for (var index = 1; index <= cantidad; index++) {
           try {
             // RCEL - RÉGIMEN DE COMPROBANTES EN LÍNEA
             const botonGenerar = await driver.findElement(By.xpath("//*[text()='Generar Comprobantes']"));
